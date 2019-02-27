@@ -4,61 +4,99 @@ import { kebabCase } from 'lodash'
 import Helmet from 'react-helmet'
 import { graphql, Link } from 'gatsby'
 import Layout from '../components/Layout'
+import styles from './product.module.css';
 
-export const ProductTemplate = ({
-  image,
-  description,
-  tags,
-  title,
-  helmet,
-}) => {
+export class ProductTemplate extends React.Component {
+  constructor (props) {
+    super(props);
 
-  return (
-    <section className="section">
-      {helmet || ''}
-      <div className="container content">
-        <div className="columns">
-          <div className="column is-10 is-offset-1">
-            <h1 className="title is-size-2 has-text-weight-bold is-bold-light">
-              {title}
-            </h1>
-            <p>{description}</p>
-            <div
-              className="full-width-image margin-top-0"
-              style={{
-                backgroundImage: `url(${
-                  !!image.childImageSharp
-                    ? image.childImageSharp.fluid.src
-                    : image
-                  })`,
-                backgroundPosition: `top left`,
-                backgroundAttachment: `fixed`,
-              }}
-            />
-            {tags && tags.length ? (
-              <div style={{ marginTop: `4rem` }}>
-                <h4>Tags</h4>
-                <ul className="taglist">
-                  {tags.map(tag => (
-                    <li key={tag + `tag`}>
-                      <Link to={`/tags/${kebabCase(tag)}/`}>{tag}</Link>
-                    </li>
-                  ))}
-                </ul>
+    this.state = {
+      gallery: this.props.gallery,
+    }
+  }
+
+  selectPrevImage = () => {
+    this.setState(state => {
+      const last = state.gallery[state.gallery.length - 1];
+      const rest = state.gallery.slice(0, state.gallery.length - 1);
+
+      return {
+        gallery: [last, ...rest],
+      }
+    });
+  };
+
+  selectNextImage = () => {
+    this.setState(state => {
+      const first = state.gallery[0];
+      const rest = state.gallery.slice(1);
+
+      return {
+        gallery: [...rest, first],
+      };
+    });
+  };
+
+  render () {
+    const {
+      description,
+      gallery,
+      helmet,
+      price,
+      tags,
+      title,
+      variants,
+    } = this.props;
+
+    const image = this.state.gallery[0];
+
+    return (
+      <section className="section">
+        {helmet || ''}
+        <div className="container content">
+          <div className="columns">
+            <div className="column is-10 is-offset-1">
+              <h1 className="title is-size-2 has-text-weight-bold is-bold-light">
+                {title}
+              </h1>
+              <p>Description: {description}</p>
+              <p>Price: ${price}</p>
+              <select id="variant-select">
+                {variants.map(variant => <option key={variant} value={variant}>{variant}</option>)}
+              </select>
+              <div className="image is-16by9">
+                <img src={!!image.childImageSharp ? image.childImageSharp.fluid.src : image} />
               </div>
-            ) : null}
+              <div className={styles.slider}>
+                <i className={styles.left} onClick={this.selectPrevImage}/>
+                <i className={styles.right} onClick={this.selectNextImage}/>
+              </div>
+              {tags && tags.length ? (
+                <div style={{ marginTop: `4rem` }}>
+                  <h4>Tags</h4>
+                  <ul className="taglist">
+                    {tags.map(tag => (
+                      <li key={tag + `tag`}>
+                        <Link to={`/tags/${kebabCase(tag)}/`}>{tag}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
-      </div>
-    </section>
-  )
+      </section>
+    )
+  }
 }
 
 ProductTemplate.propTypes = {
-  image: PropTypes.object.isRequired,
   description: PropTypes.string,
-  title: PropTypes.string,
+  gallery: PropTypes.array,
   helmet: PropTypes.object,
+  title: PropTypes.string,
+  variants: PropTypes.array,
 }
 
 const Product = ({ data }) => {
@@ -77,9 +115,11 @@ const Product = ({ data }) => {
             />
           </Helmet>
         }
-        image={product.frontmatter.image}
+        gallery={product.frontmatter.gallery}
+        price={product.frontmatter.price}
         tags={product.frontmatter.tags}
         title={product.frontmatter.title}
+        variants={product.frontmatter.variants}
       />
     </Layout>
   )
@@ -99,16 +139,17 @@ export const pageQuery = graphql`
       id
       frontmatter {
         title
-        image {
+        gallery {
           childImageSharp {
             fluid(maxWidth: 2048, quality: 100) {
               ...GatsbyImageSharpFluid
-            }
+           }
           }
         }
         description
         price
         tags
+        variants
       }
     }
   }
