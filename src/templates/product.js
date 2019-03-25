@@ -5,6 +5,13 @@ import Helmet from 'react-helmet'
 import { graphql, Link } from 'gatsby'
 import Layout from '../components/Layout'
 import styles from './product.module.css';
+import CounterInput from 'react-counter-input';
+
+const Button = ({ children, handleClick }) => {
+  return (
+    <button onClick={handleClick}>{children}</button>
+  );
+};
 
 export class ProductTemplate extends React.Component {
   constructor (props) {
@@ -61,9 +68,13 @@ export class ProductTemplate extends React.Component {
               </h1>
               <p>Description: {description}</p>
               <p>Price: ${price}</p>
-              <select id="variant-select">
-                {variants.map(variant => <option key={variant} value={variant}>{variant}</option>)}
-              </select>
+              <div>
+                <CounterInput />
+                <select id="variant-select">
+                  {variants.map(variant => <option key={variant} value={variant}>{variant}</option>)}
+                </select>
+                <Button>Add to Cart</Button>
+              </div>
               <div className="image is-16by9">
                 <img src={!!image.childImageSharp ? image.childImageSharp.fluid.src : image} />
               </div>
